@@ -7,7 +7,6 @@ import {
   UserButton
 } from '@clerk/nextjs'
 import { DM_Sans } from "next/font/google";
-import { dark } from "@clerk/themes";
 import "./globals.css";
 import { ThemeProvider } from "./providers/theme-provider";
 
@@ -24,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <ClerkProvider appearance={{baseTheme:dark}}>
+   
     <html lang="en" suppressHydrationWarning>
       <ThemeProvider
        attribute="class"
@@ -35,6 +34,5 @@ export default function RootLayout({
       </ThemeProvider>
     
     </html>
-    </ClerkProvider>
   );
 }
