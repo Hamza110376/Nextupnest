@@ -1,9 +1,11 @@
 "use server";
 
-import { currentUser } from "@clerk/nextjs/server";
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { db } from "./db";
 import { redirect } from "next/navigation";
 import { SubAccount, User } from "@prisma/client";
+import { error } from "console";
+import { connect } from "http2";
 
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
@@ -31,7 +33,7 @@ export const getAuthUserDetails = async () => {
   return userData;
 };
 
-export const activityLogNotification = async ({
+export const saveActivityLogNotification = async ({
   agencyId,
   description,
   subaccountId,
@@ -43,7 +45,7 @@ export const activityLogNotification = async ({
   const authUser = await currentUser();
   let userData;
   if (authUser) {
-    const response = await db.user.findFirst({
+    let response = await db.user.findFirst({
       where: {
         Agency: {
           SubAccount: {
@@ -52,10 +54,64 @@ export const activityLogNotification = async ({
         },
       },
     });
-    if (response) userData = response;
-    {
+    if (response) {
+      userData = response;
+    } else {
+      userData = await db.user.findUnique({where:{email:authUser.emailAddresses[0].emailAddress}});
     }
+    if (!userData) {
+      console.log('cant;t find the user')
+      return;
+    }
+    let foundAgencyId = agencyId;
+    if (!foundAgencyId) {
+      if (!subaccountId) {
+        throw new Error("you need to provide atleast an agencIid or subaccountId")
+      }
+    }
+    const responses =await db.subAccount.findUnique({where:{id: subaccountId}})
+    if(response) foundAgencyId = response.agencyId
   }
+  if (subaccountId) {
+    await db.notification.create({
+      data:{
+        notification: `${userData?.name} | ${description}`,
+        User:{
+          connect:{
+         id: userData?.id
+          },
+        },
+        Agency:{
+          connect:{
+            id: foundAgencyId,
+          },
+        },
+        SubAccount:{
+          connect:{
+            id: subaccountId
+          }
+        }
+      }
+    })
+  }
+  else{
+    await db.notification.create({
+      data:{
+        notification: `${userData?.name} | ${description}`,
+        User:{
+          connect:{
+            id: userData?.id
+          },
+        },
+        Agency:{
+          connect:{
+            id: foundAgencyId
+          }
+        }
+      }
+    })
+  }
+
 };
 
 export const createTeamUser = async (agencyId: string, user: User) => {
@@ -83,5 +139,35 @@ export const verifyAndAcceptInvitation = async () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
+     await saveActivityLogNotification({
+       agencyId: invitationExist?.agencyId,
+       description: `joined`,
+       subaccountId: undefined,
+     });
+     if (userDetail) {
+      await clerkClient.users.updateUserMetadata(user.id,{
+        privateMetadata:{
+          role:userDetail.role || 
+          "SUBACCOUNT_USER",
+        }
+      })
+
+      await db.invitation.delete({
+        where:{
+          email: userDetail.email,
+        }
+
+      })
+      return userDetail.agencyId
+      
+     } else return null
+  }else{
+    const agency = db.user.findUnique({where:{
+      email: user.emailAddresses[0].emailAddress
+    }}) 
+
+    return agency? agency.agency:null
   }
+
+ 
 };
