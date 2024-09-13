@@ -70,54 +70,54 @@ export const saveActivityLogNotification = async ({
       }
     }
     const responses =await db.subAccount.findUnique({where:{id: subaccountId}})
-    if(response) foundAgencyId = response.agencyId
+    if(responses) foundAgencyId = responses.agencyId;
   }
   if (subaccountId) {
     await db.notification.create({
-      data:{
+      data: {
         notification: `${userData?.name} | ${description}`,
-        User:{
-          connect:{
-         id: userData?.id
+        User: {
+          connect: {
+            id: userData?.id,
           },
         },
-        Agency:{
-          connect:{
+        Agency: {
+          connect: {
             id: foundAgencyId,
           },
         },
-        SubAccount:{
-          connect:{
-            id: subaccountId
-          }
-        }
-      }
-    })
+        SubAccount: {
+          connect: {
+            id: subaccountId,
+          },
+        },
+      },
+    });
   }
   else{
     await db.notification.create({
-      data:{
+      data: {
         notification: `${userData?.name} | ${description}`,
-        User:{
-          connect:{
-            id: userData?.id
+        User: {
+          connect: {
+            id: userData?.id,
           },
         },
-        Agency:{
-          connect:{
-            id: foundAgencyId
-          }
-        }
-      }
-    })
+        Agency: {
+          connect: {
+            id: foundAgencyId,
+          },
+        },
+      },
+    });
   }
 
 };
 
 export const createTeamUser = async (agencyId: string, user: User) => {
   if (user.role === "AGENCY_OWNER") return null;
-  const response = await db.user.create({ data: { ...user } });
-  return response;
+  const responses= await db.user.create({ data: { ...user } });
+  return responses
 };
 
 export const verifyAndAcceptInvitation = async () => {
