@@ -5,7 +5,11 @@ import { redirect } from 'next/navigation'
 
 import React from 'react'
 
-const page = async ({searchParams,}:{searchParams:(plan:Plan; state: string; code: string)}) => {
+const page = async (
+  {
+    searchParams,
+  }:{searchParams:{plan:Plan; state:string; code: string}}
+) => {
 
     const AgencyId =await verifyAndAcceptInvitation()
 console.log(AgencyId)
@@ -14,9 +18,31 @@ console.log(AgencyId)
       return redirect("/subaccount")
     }
     else if(user?.role ==="AGENCY_OWNER" || user?.role=== "AGENCY_ADMIN"){
+if (searchParams.plan) {
+  return redirect(`/agency/${AgencyId}/billing?/paln = ${searchParams.plan}`)
+}
+if (searchParams.state) {
+  const statePath= searchParams.state.split(`__`)[0];
+  const stateAgencyId = searchParams.state.split(`__`)[1];
+  if (!stateAgencyId) return <div>Not authorized</div>
+  return redirect(
+    `/agency/${stateAgencyId}/${statePath}?code=${searchParams.code}`
+  )
+}
+else{
+  return redirect(`/agency/${AgencyId}`)
+}
 
     }
-  return  <div>Agency</div>
+
+const authUser = await currentUser()
+return <div className='flex justify-center items-center mt-4'>
+  <div className='max-w-[850px] border-[1px] p-4 rounded-xl'>
+    <h1 className='text-4xl'>Create An Agency</h1>
+
+  </div>
+</div>
 }
+
 
 export default page
