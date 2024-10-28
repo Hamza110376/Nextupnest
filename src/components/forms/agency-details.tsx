@@ -14,7 +14,7 @@ import {
 } from "../ui/card";
 import { useFormState } from "react-dom";
 import { Form, FormControl, FormField, FormItem } from "../ui/form";
-import zodResolver from "@hookform/resolvers"
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from "zod";
 import FileUpload from "../site/navigation/global/file-upload";
 
@@ -41,7 +41,7 @@ const AgencyDetails = ({ data }: Props) => {
   const [deletingAgency, setDeletingAgency] = useState(false);
   const form = useForm<z.infer<typeof FormSchema>>({
     node: "onChange",
-    // resolver: zodResolver(FormSchema),
+    resolver: zodResolver(FormSchema),
     defaultValues: {
       name: data?.name,
       companyEmail: data?.companyEmail,
@@ -67,7 +67,7 @@ form.reset(data)
     <AlertDialog>
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Agency Information</CardTitle>
+          <CardTitle className="text-center">Agency Information</CardTitle>
           <CardDescription>
             Let create an agency for your business. You can edit agency settings
             later from the agency settings tab
@@ -86,6 +86,7 @@ render={({field})=>{
   <FileUpload>
     
   </FileUpload>
+      </FormControl>
   </FormItem>
 }}
 >
